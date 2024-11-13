@@ -34,6 +34,10 @@ pub enum JingleSleighError {
     EmptyInstruction,
     #[error("Failure to acquire mutex to sleigh FFI function")]
     SleighCompilerMutexError,
+    #[error("Invalid EmbeddedFile")]
+    InvalidEmbedPath,
+    #[error("Invalid EmbeddedFile UTF-8")]
+    InvalidEmbedUtf8,
 }
 
 impl From<JingleSleighError> for std::fmt::Error {

@@ -1,5 +1,6 @@
 use crate::error::JingleSleighError;
 use crate::error::JingleSleighError::LanguageSpecRead;
+use rust_embed::RustEmbed;
 use serde::Deserialize;
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -56,6 +57,20 @@ struct LanguageDefinitions {
 pub(super) fn parse_ldef(path: &Path) -> Result<Vec<LanguageDefinition>, JingleSleighError> {
     let file = File::open(path).map_err(|_| LanguageSpecRead)?;
     let def: LanguageDefinitions = serde_xml_rs::from_reader(file)?;
+    Ok(def.language_definitions)
+}
+
+pub(super) fn parse_ldef_from_asset<T: RustEmbed>(
+    path: &Path,
+) -> Result<Vec<LanguageDefinition>, JingleSleighError> {
+    let path_str = path.to_str().ok_or(JingleSleighError::InvalidEmbedPath)?;
+    let file = T::get(path_str).ok_or(JingleSleighError::LanguageSpecRead)?;
+
+    let file_content =
+        std::str::from_utf8(&file.data).map_err(|_| JingleSleighError::InvalidEmbedUtf8)?;
+    let def: LanguageDefinitions =
+        serde_xml_rs::from_str(file_content).map_err(|_| JingleSleighError::LanguageSpecRead)?;
+
     Ok(def.language_definitions)
 }
 

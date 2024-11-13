@@ -1,8 +1,11 @@
-use crate::context::builder::language_def::{parse_ldef, LanguageDefinition};
+use crate::context::builder::language_def::{
+    parse_ldef, parse_ldef_from_asset, LanguageDefinition,
+};
 use crate::context::builder::processor_spec::parse_pspec;
 use crate::context::SleighContext;
 use crate::error::JingleSleighError;
 use crate::error::JingleSleighError::{InvalidLanguageId, LanguageSpecRead};
+use rust_embed::RustEmbed;
 use std::fmt::Debug;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -46,6 +49,31 @@ impl SleighContextBuilder {
         }
         Ok(context)
     }
+
+    pub fn load_assets<T: RustEmbed>() -> Result<Self, JingleSleighError> {
+        let ldef = SleighContextBuilder::_load_assets::<T>()?;
+        Ok(SleighContextBuilder { defs: ldef })
+    }
+
+    pub fn _load_assets<T: RustEmbed>(
+    ) -> Result<Vec<(LanguageDefinition, PathBuf)>, JingleSleighError> {
+        let mut defs = vec![];
+
+        for file in T::iter() {
+            let path = file.as_ref();
+            // Only process files with the .ldefs extension
+            if path.ends_with(".ldefs") {
+                // Pass the path to parse_ldef_from_asset, which will parse the content
+                let ldef = parse_ldef_from_asset::<T>(Path::new(path))?;
+
+                // Extend defs with the parsed language definitions and their paths
+                defs.extend(ldef.into_iter().map(|l| (l, PathBuf::from(path))));
+            }
+        }
+
+        Ok(defs)
+    }
+
     pub fn load_folder<T: AsRef<Path>>(path: T) -> Result<Self, JingleSleighError> {
         let ldef = SleighContextBuilder::_load_folder(path.as_ref())?;
         Ok(SleighContextBuilder { defs: ldef })
@@ -98,8 +126,8 @@ fn find_ldef(path: &Path) -> Result<PathBuf, JingleSleighError> {
 mod tests {
     use crate::context::builder::processor_spec::parse_pspec;
     use crate::context::builder::{parse_ldef, SleighContextBuilder};
-
     use crate::tests::SLEIGH_ARCH;
+    use rust_embed::Embed;
     use std::path::Path;
 
     #[test]
@@ -108,6 +136,16 @@ mod tests {
             "ghidra/Ghidra/Processors/x86/data/languages/x86.ldefs",
         ))
         .unwrap();
+    }
+
+    #[derive(Embed)]
+    #[folder = "assets/"]
+    struct Asset;
+
+    #[test]
+    fn test_parse_asset() {
+        let builder = SleighContextBuilder::load_assets::<Asset>().expect("Failed to load assets");
+        assert_eq!(builder.get_language_ids().len(), 6);
     }
 
     #[test]

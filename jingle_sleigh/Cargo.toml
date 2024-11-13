@@ -27,6 +27,7 @@ thiserror = { version = "1.0.61", features = [] }
 object = { version = "0.36.0", optional = true }
 libz-sys = { version = "1.1.18", default-features = false, features = ["libc"] }
 tracing = "0.1.40"
+rust-embed = "8.5.0"
 
 [build-dependencies]
 cxx-build = "1.0.122"
