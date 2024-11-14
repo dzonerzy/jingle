@@ -1,4 +1,5 @@
 use thiserror::Error;
+use vfs::VfsError;
 
 /// An error (usually from across the FFI boundary) in something involving sleigh
 #[derive(Debug, Error)]
@@ -34,10 +35,22 @@ pub enum JingleSleighError {
     EmptyInstruction,
     #[error("Failure to acquire mutex to sleigh FFI function")]
     SleighCompilerMutexError,
+    #[error("Failure to read file due to invalid path")]
+    PathError,
+    #[error("Failure to read file")]
+    FileReadError,
+    #[error("VFS file error")]
+    VfsFileError,
 }
 
 impl From<JingleSleighError> for std::fmt::Error {
     fn from(_value: JingleSleighError) -> Self {
         std::fmt::Error
+    }
+}
+
+impl From<VfsError> for JingleSleighError {
+    fn from(error: VfsError) -> Self {
+        JingleSleighError::VfsFileError
     }
 }

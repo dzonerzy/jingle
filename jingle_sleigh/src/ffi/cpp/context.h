@@ -12,17 +12,19 @@ class ContextFFI;
 #include "sleigh/loadimage.hh"
 #include "dummy_load_image.h"
 
-class ContextFFI {
+class ContextFFI
+{
     ghidra::Sleigh sleigh;
     ghidra::ContextInternal c_db;
     DummyLoadImage image;
-public:
+    std::vector<uint8_t> slaBytes;
 
-    explicit ContextFFI(rust::Str slaPath);
+public:
+    explicit ContextFFI(rust::Slice<const rust::u8> slabytes);
 
     void set_initial_context(rust::Str name, uint32_t val);
 
-    void setImage(ImageFFI const&img);
+    void setImage(ImageFFI const &img);
 
     InstructionFFI get_one_instruction(uint64_t offset) const;
 
@@ -37,10 +39,10 @@ public:
     rust::Vec<RegisterInfoFFI> getRegisters() const;
 };
 
-RegisterInfoFFI collectRegInfo(std::tuple<ghidra::VarnodeData*, std::string> el);
+RegisterInfoFFI collectRegInfo(std::tuple<ghidra::VarnodeData *, std::string> el);
 
 VarnodeInfoFFI varnodeToFFI(ghidra::VarnodeData vn);
 
-std::unique_ptr<ContextFFI> makeContext(rust::Str slaPath);
+std::unique_ptr<ContextFFI> makeContext(rust::Slice<const rust::u8> slabytes);
 
-#endif //JINGLE_SLEIGH_CONTEXT_H
+#endif // JINGLE_SLEIGH_CONTEXT_H

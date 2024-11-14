@@ -72,16 +72,10 @@ impl RegisterManager for SleighContext {
 }
 
 impl SleighContext {
-    pub(crate) fn new<T: AsRef<Path>>(
-        language_def: &LanguageDefinition,
-        base_path: T,
-    ) -> Result<Self, JingleSleighError> {
-        let path = base_path.as_ref().join(&language_def.sla_file);
-        let abs = path.canonicalize().map_err(|_| LanguageSpecRead)?;
-        let path_str = abs.to_str().ok_or(LanguageSpecRead)?;
+    pub(crate) fn new(sla_data: &[u8], id: String) -> Result<Self, JingleSleighError> {
         match CTX_BUILD_MUTEX.lock() {
             Ok(make_context) => {
-                let ctx = make_context(path_str).map_err(|e| SleighInitError(e.to_string()))?;
+                let ctx = make_context(sla_data).map_err(|e| SleighInitError(e.to_string()))?;
                 let mut spaces: Vec<SpaceInfo> = Vec::with_capacity(ctx.getNumSpaces() as usize);
                 for idx in 0..ctx.getNumSpaces() {
                     spaces.push(SpaceInfo::from(ctx.getSpaceByIndex(idx)));
@@ -95,7 +89,7 @@ impl SleighContext {
                 Ok(Self {
                     ctx,
                     spaces,
-                    language_id: language_def.id.clone(),
+                    language_id: id,
                     registers,
                 })
             }

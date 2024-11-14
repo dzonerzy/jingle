@@ -3,6 +3,7 @@ use crate::error::JingleSleighError::LanguageSpecRead;
 use serde::Deserialize;
 use std::fs::File;
 use std::path::Path;
+use vfs::FileSystem;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename = "context_set")]
@@ -35,9 +36,25 @@ pub struct ProcessorSpec {
     pub context_data: Option<ContextData>,
 }
 
-pub(super) fn parse_pspec(path: &Path) -> Result<ProcessorSpec, JingleSleighError> {
-    let file = File::open(path).map_err(|_| LanguageSpecRead)?;
-    let def: ProcessorSpec = serde_xml_rs::from_reader(file)?;
+pub(super) fn parse_pspec(
+    fs: &dyn FileSystem,
+    path: &Path,
+) -> Result<ProcessorSpec, JingleSleighError> {
+    // Convert the Path to a string for compatibility with the FileSystem trait
+    let path_str = path.to_string_lossy();
+
+    // Use the FileSystem trait to open the file
+    let mut file = fs
+        .open_file(&path_str)
+        .map_err(|_| JingleSleighError::LanguageSpecRead)?;
+
+    // Read the contents of the file into a buffer
+    let mut file_content = Vec::new();
+    file.read_to_end(&mut file_content)
+        .map_err(|_| JingleSleighError::LanguageSpecRead)?;
+
+    // Deserialize XML content from the buffer
+    let def: ProcessorSpec = serde_xml_rs::from_reader(file_content.as_slice())?;
     Ok(def)
 }
 

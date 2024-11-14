@@ -12,36 +12,30 @@
 #include <memory>
 #include <utility>
 
-ContextFFI::ContextFFI(rust::Str slaPath)
-    : sleigh(new DummyLoadImage(), &c_db) {
+ContextFFI::ContextFFI(rust::Slice<const rust::u8> slabytes)
+    : sleigh(new DummyLoadImage(), &c_db)
+{
   ghidra::AttributeId::initialize();
   ghidra::ElementId::initialize();
-
-  ghidra::DocumentStorage documentStorage = ghidra::DocumentStorage();
-
-  std::stringstream sleighfilename;
-  sleighfilename << "<sleigh>";
-  sleighfilename << slaPath;
-  sleighfilename << "</sleigh>";
-
-  ghidra::Document *doc = documentStorage.parseDocument(sleighfilename);
-  ghidra::Element *root = doc->getRoot();
-  documentStorage.registerTag(root);
-  sleigh.initialize(documentStorage);
+  this->slaBytes = std::vector<uint8_t>(slabytes.data(), slabytes.data() + slabytes.size());
+  sleigh.initialize(this->slaBytes);
 }
 
-void ContextFFI::set_initial_context(rust::Str name, uint32_t val) {
+void ContextFFI::set_initial_context(rust::Str name, uint32_t val)
+{
   sleigh.setContextDefault(name.operator std::string(), val);
 }
 
 std::shared_ptr<AddrSpaceHandle>
-ContextFFI::getSpaceByIndex(ghidra::int4 idx) const {
+ContextFFI::getSpaceByIndex(ghidra::int4 idx) const
+{
   return std::make_shared<AddrSpaceHandle>(sleigh.getSpace(idx));
 }
 
 ghidra::int4 ContextFFI::getNumSpaces() const { return sleigh.numSpaces(); }
 
-VarnodeInfoFFI ContextFFI::getRegister(rust::Str name) const {
+VarnodeInfoFFI ContextFFI::getRegister(rust::Str name) const
+{
   ghidra::VarnodeData vn = sleigh.getRegister(name.operator std::string());
   VarnodeInfoFFI info;
   info.space = std::make_unique<AddrSpaceHandle>(vn.space);
@@ -50,30 +44,34 @@ VarnodeInfoFFI ContextFFI::getRegister(rust::Str name) const {
   return info;
 };
 
-rust::Str ContextFFI::getRegisterName(VarnodeInfoFFI vn) const {
+rust::Str ContextFFI::getRegisterName(VarnodeInfoFFI vn) const
+{
   std::string name =
       sleigh.getRegisterName(vn.space->getRaw(), vn.offset, vn.size);
   return {name};
 }
 
-rust::Vec<RegisterInfoFFI> ContextFFI::getRegisters() const {
+rust::Vec<RegisterInfoFFI> ContextFFI::getRegisters() const
+{
   std::map<ghidra::VarnodeData, std::string> reglist;
   rust::Vec<RegisterInfoFFI> v;
   sleigh.getAllRegisters(reglist);
   v.reserve(reglist.size());
-  for (auto const &vn : reglist) {
+  for (auto const &vn : reglist)
+  {
     v.emplace_back(collectRegInfo(vn));
   }
   return v;
 }
 
-void ContextFFI::setImage(ImageFFI const &img) {
+void ContextFFI::setImage(ImageFFI const &img)
+{
   sleigh.reset(new RustLoadImage(img), &c_db);
-  ghidra::DocumentStorage documentStorage = ghidra::DocumentStorage();
-  sleigh.initialize(documentStorage);
+  sleigh.initialize(this->slaBytes);
 }
 
-InstructionFFI ContextFFI::get_one_instruction(uint64_t offset) const {
+InstructionFFI ContextFFI::get_one_instruction(uint64_t offset) const
+{
   JinglePcodeEmitter pcode;
   JingleAssemblyEmitter assembly;
   ghidra::Address a = ghidra::Address(sleigh.getDefaultCodeSpace(), offset);
@@ -91,6 +89,7 @@ InstructionFFI ContextFFI::get_one_instruction(uint64_t offset) const {
   return i;
 }
 
-std::unique_ptr<ContextFFI> makeContext(rust::Str slaPath) {
-  return std::make_unique<ContextFFI>(slaPath);
+std::unique_ptr<ContextFFI> makeContext(rust::Slice<const rust::u8> slabytes)
+{
+  return std::make_unique<ContextFFI>(slabytes);
 }

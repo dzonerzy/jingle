@@ -7,7 +7,7 @@ use cxx::{Exception, ExternType, UniquePtr};
 use std::pin::Pin;
 use std::sync::Mutex;
 
-type ContextGeneratorFp = fn(&str) -> Result<UniquePtr<ContextFFI>, Exception>;
+type ContextGeneratorFp = fn(&[u8]) -> Result<UniquePtr<ContextFFI>, Exception>;
 
 pub(crate) static CTX_BUILD_MUTEX: Mutex<ContextGeneratorFp> = Mutex::new(makeContext);
 
@@ -29,7 +29,7 @@ pub(crate) mod bridge {
         include!("jingle_sleigh/src/ffi/cpp/exception.h");
 
         pub(crate) type ContextFFI;
-        pub(super) fn makeContext(slaPath: &str) -> Result<UniquePtr<ContextFFI>>;
+        pub(super) fn makeContext(slaBytes: &[u8]) -> Result<UniquePtr<ContextFFI>>;
         pub(crate) fn set_initial_context(
             self: Pin<&mut ContextFFI>,
             name: &str,
