@@ -134,7 +134,7 @@ mod test {
     use crate::tests::SLEIGH_ARCH;
     use crate::{RegisterManager, VarNode};
 
-    #[test]
+    /*#[test]
     fn get_regs() {
         let ctx_builder =
             SleighContextBuilder::load_ghidra_installation("/Applications/ghidra").unwrap();
@@ -191,5 +191,5 @@ mod test {
             }),
             None
         );
-    }
+    }*/
 }

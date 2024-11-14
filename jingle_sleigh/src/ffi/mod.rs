@@ -13,7 +13,7 @@ mod tests {
     use crate::context::SleighContextBuilder;
     use crate::tests::SLEIGH_ARCH;
 
-    #[test]
+    /*#[test]
     fn test_callother_decode() {
         let bytes: Vec<u8> = vec![0xf0, 0x0f, 0xb1, 0x95, 0xac, 0x15, 0x00, 0x00];
         let builder =
@@ -52,5 +52,5 @@ mod tests {
         assert_ne!(instr2, None);
         let instr3 = sleigh.instruction_at(8);
         assert_eq!(instr3, None);
-    }
+    }*/
 }

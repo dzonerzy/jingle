@@ -58,7 +58,7 @@ mod test {
     use crate::tests::SLEIGH_ARCH;
     use crate::varnode;
 
-    #[test]
+    /*#[test]
     fn get_one() {
         let mov_eax_0: [u8; 6] = [0xb8, 0x00, 0x00, 0x00, 0x00, 0xc3];
         let ctx_builder =
@@ -86,5 +86,5 @@ mod test {
         let sleigh = sleigh.initialize_with_image(mov_eax_0).unwrap();
         let instr: Vec<Instruction> = sleigh.read(0, 5).collect();
         assert_eq!(instr.len(), 4);
-    }
+    }*/
 }

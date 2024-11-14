@@ -1,20 +1,6 @@
-use std::fs;
-use std::fs::copy;
-use std::path::PathBuf;
 fn main() {
     if cfg!(target_os = "macos") {
         println!("cargo::rustc-link-search=/opt/homebrew/lib")
-    }
-    if !cpp_src_path().exists() {
-        let submod = submod_path();
-        if !submod.read_dir().is_ok_and(|f| f.count() != 0) {
-            panic!(
-                "SLEIGH sources not found! This likely means that you are developing on a fresh \
-            clone of jingle and need to pull in the SLEIGH sources. Please run: \n\
-            git submodule init && git submodule update"
-            )
-        }
-        copy_sources();
     }
 
     let rust_sources = vec![
@@ -77,49 +63,4 @@ fn main() {
     println!("cargo::rerun-if-changed=src/ffi/addrspace.rs");
     println!("cargo::rerun-if-changed=src/ffi/context_ffi.rs");
     println!("cargo::rerun-if-changed=src/ffi/instruction.rs");
-    println!(
-        "cargo::rerun-if-changed={}",
-        ghidra_cpp_path().to_str().unwrap()
-    );
-}
-
-fn copy_sources() {
-    fs::create_dir(cpp_src_path()).unwrap();
-    for path in fs::read_dir(ghidra_cpp_path()).unwrap().flatten() {
-        if let Some(name) = path.file_name().to_str() {
-            if name.ends_with(".cc") || name.ends_with(".hh") || name.ends_with(".h") {
-                let mut result = cpp_src_path();
-                result.push(name);
-                copy(path.path().as_path(), result.as_path()).unwrap();
-                println!("Copying {}", name)
-            }
-        }
-    }
-}
-
-fn cpp_src_path() -> PathBuf {
-    let mut p = PathBuf::new();
-    p.push("src");
-    p.push("ffi");
-    p.push("cpp");
-    p.push("sleigh");
-    p
-}
-
-fn submod_path() -> PathBuf {
-    let mut p = PathBuf::new();
-    p.push("ghidra");
-    p
-}
-
-fn ghidra_cpp_path() -> PathBuf {
-    let mut p = PathBuf::new();
-    p.push(submod_path());
-    p.push("Ghidra");
-    p.push("Features");
-    p.push("Decompiler");
-    p.push("src");
-    p.push("decompile");
-    p.push("cpp");
-    p
 }
